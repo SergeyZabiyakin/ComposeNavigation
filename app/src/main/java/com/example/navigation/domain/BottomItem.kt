@@ -3,7 +3,7 @@ package com.example.navigation.domain
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.example.navigation.data.Config.Button
 
-data class BottomNavigationItem(
+data class BottomItem(
     val type: Button,
     val selected: Boolean,
     val iconSelected: ImageVector,

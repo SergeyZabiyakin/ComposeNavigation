@@ -4,6 +4,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -39,23 +42,23 @@ import com.example.navigation.MainRouteConfig.SportsTop
 import com.example.navigation.data.Config
 import com.example.navigation.data.Config.Tab.CASINO
 import com.example.navigation.data.Config.Tab.SPORTS
-import com.example.navigation.domain.BottomNavigationManager
-import com.example.navigation.domain.NavigationHelper
+import com.example.navigation.domain.BottomMenuManager
+import com.example.navigation.domain.RootNavigationHelper
 import com.example.navigation.ui.compose.Screen
 import com.example.navigation.ui.compose.Tabs
 import com.example.navigation.ui.theme.NavigationTheme
 import com.google.gson.Gson
 
 class MainActivity : ComponentActivity() {
-    private val manager = BottomNavigationManager()
+    private val manager = BottomMenuManager()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val jsonString = readJSONFromAssets(this, "config.json")
         val config = Gson().fromJson(jsonString, Config::class.java)
         if (config.start == CASINO) {
-            manager.setItems(config.casino)
+            manager.setItems(config.casino, config.casino.first())
         } else {
-            manager.setItems(config.sports)
+            manager.setItems(config.sports, config.sports.first())
         }
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -64,31 +67,37 @@ class MainActivity : ComponentActivity() {
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     bottomBar = {
-                        val items by manager.state.collectAsState()
-                        NavigationBar {
-                            items.forEach { item ->
-                                NavigationBarItem(
-                                    selected = item.selected,
-                                    label = {
-                                        Text(text = item.type.text)
-                                    },
-                                    icon = {
-                                        Icon(
-                                            imageVector = item.icon,
-                                            contentDescription = item.type.text
-                                        )
-                                    },
-                                    onClick = {
-                                        manager.selectItem(item.type)
-                                    }
-                                )
+                        val visible by manager.visible.collectAsState()
+                        AnimatedVisibility(
+                            visible = visible,
+                            enter = expandVertically(),
+                            exit = shrinkVertically()
+                        ) {
+                            val items by manager.state.collectAsState()
+                            NavigationBar {
+                                items.forEach { item ->
+                                    NavigationBarItem(
+                                        selected = item.selected,
+                                        label = {
+                                            Text(text = item.type.text)
+                                        },
+                                        icon = {
+                                            Icon(
+                                                imageVector = item.icon,
+                                                contentDescription = item.type.text
+                                            )
+                                        },
+                                        onClick = {
+                                            manager.selectItem(item.type)
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
                 ) { padding ->
                     MainContent(
                         modifier = Modifier.padding(padding),
-                        manager = manager,
                         finish = { finish() },
                         config = config
                     )
@@ -99,23 +108,22 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     private fun MainContent(
-        manager: BottomNavigationManager,
         modifier: Modifier,
         finish: () -> Unit,
         config: Config
     ) {
         val controller = rememberNavController()
         var selectedTab by remember { mutableStateOf(config.start) }
-        val navigationHelper = remember { NavigationHelper(config, controller) }
+        val navigationHelper = remember { RootNavigationHelper(config, controller) }
 
         fun popBackStack() {
             val previous = navigationHelper.previous
             if (previous is Casino && selectedTab != CASINO) {
-                manager.setItems(config.casino)
+                manager.setItems(config.casino, previous.screenButton())
                 selectedTab = CASINO
             }
             if (previous is Sports && selectedTab != SPORTS) {
-                manager.setItems(config.sports)
+                manager.setItems(config.sports, previous.screenButton())
                 selectedTab = SPORTS
             }
             if (!navigationHelper.popBackStack()) finish()
@@ -124,6 +132,11 @@ class MainActivity : ComponentActivity() {
         LaunchedEffect(Unit) {
             navigationHelper.current.collect { current ->
                 manager.selectItem(current.screenButton())
+                if (current.bottomMenuVisible()) {
+                    manager.showMenu()
+                } else {
+                    manager.hideMenu()
+                }
             }
         }
         LaunchedEffect(Unit) {
@@ -144,11 +157,13 @@ class MainActivity : ComponentActivity() {
             Tabs(selectedTab = selectedTab) {
                 selectedTab = it
                 if (it == CASINO) {
-                    manager.setItems(config.casino)
-                    navigationHelper.navigateToCasino()
+                    val lastCasino = navigationHelper.lastCasino()
+                    manager.setItems(config.casino, lastCasino.screenButton())
+                    navigationHelper.navigate(lastCasino)
                 } else {
-                    manager.setItems(config.sports)
-                    navigationHelper.navigateToSports()
+                    val lastSports = navigationHelper.lastSports()
+                    manager.setItems(config.sports, lastSports.screenButton())
+                    navigationHelper.navigate(lastSports)
                 }
             }
             NavHost(

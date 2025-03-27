@@ -23,7 +23,9 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 sealed interface MainRouteConfig {
+    fun saveState(): Boolean
     fun screenButton(): Button
+    fun bottomMenuVisible() : Boolean
 
     @Serializable
     sealed interface Casino : MainRouteConfig
@@ -33,47 +35,65 @@ sealed interface MainRouteConfig {
 
     @Serializable
     data object CasinoTop : Casino {
+        override fun saveState() = true
         override fun screenButton() = TOP
+        override fun bottomMenuVisible() = true
     }
 
     @Serializable
     data object CasinoSlots : Casino {
+        override fun saveState() = true
         override fun screenButton() = SLOTS
+        override fun bottomMenuVisible() = true
     }
 
     @Serializable
     data object CasinoSearch : Casino {
+        override fun saveState() = false
         override fun screenButton() = SEARCH
+        override fun bottomMenuVisible() = false
     }
 
     @Serializable
     data object CasinoLive : Casino {
+        override fun saveState() = true
         override fun screenButton() = LIVE
+        override fun bottomMenuVisible() = true
     }
 
     @Serializable
     data object SportsTop : Sports {
+        override fun saveState() = true
         override fun screenButton() = TOP
+        override fun bottomMenuVisible() = true
     }
 
     @Serializable
     data object SportsSport : Sports {
+        override fun saveState() = true
         override fun screenButton() = SPORT
+        override fun bottomMenuVisible() = true
     }
 
     @Serializable
     data object SportsSearch : Sports {
+        override fun saveState() = false
         override fun screenButton() = SEARCH
+        override fun bottomMenuVisible() = false
     }
 
     @Serializable
     data object SportsMyBets : Sports {
+        override fun saveState() = true
         override fun screenButton() = MY_BETS
+        override fun bottomMenuVisible() = true
     }
 
     @Serializable
     data object Menu : MainRouteConfig {
+        override fun saveState() = false
         override fun screenButton() = MENU
+        override fun bottomMenuVisible() = true
     }
 }
 

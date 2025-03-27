@@ -28,7 +28,7 @@ data class Config(
         SPORT("Sport"),
 
         @SerializedName("My bets")
-        MY_BETS("My bets"),
+        MY_BETS("My bets")
     }
 
     enum class Tab {

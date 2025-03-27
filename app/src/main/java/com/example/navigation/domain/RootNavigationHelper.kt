@@ -1,5 +1,6 @@
 package com.example.navigation.domain
 
+import androidx.compose.runtime.Stable
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.example.navigation.MainRouteConfig
@@ -13,7 +14,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.util.LinkedList
 
-class NavigationHelper(
+@Stable
+class RootNavigationHelper(
     private val config: Config,
     private val controller: NavController
 ) {
@@ -36,6 +38,11 @@ class NavigationHelper(
 
     fun navigate(route: MainRouteConfig) {
         if (stack.peek() == route) return
+
+        if (!current.value.saveState()) {
+            controller.popBackStack()
+        }
+
         stack.remove(route)
         stack.push(route)
         controller.navigate(route) {
@@ -48,23 +55,13 @@ class NavigationHelper(
         _current.value = route
     }
 
-    fun navigateToCasino() {
-        stack.forEach { route ->
-            if (route is Casino) {
-                navigate(route)
-                return
-            }
-        }
-        navigate(config.getStartCasino())
+    fun lastCasino(): MainRouteConfig {
+        stack.forEach { if (it is Casino) return it }
+        return config.getStartCasino()
     }
 
-    fun navigateToSports() {
-        stack.forEach { route ->
-            if (route is Sports) {
-                navigate(route)
-                return
-            }
-        }
-        navigate(config.getStartSports())
+    fun lastSports(): MainRouteConfig {
+        stack.forEach { if (it is Sports) return it }
+        return config.getStartSports()
     }
 }
