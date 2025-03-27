@@ -43,37 +43,44 @@ import com.example.navigation.data.Config
 import com.example.navigation.data.Config.Tab.CASINO
 import com.example.navigation.data.Config.Tab.SPORTS
 import com.example.navigation.domain.BottomMenuManager
+import com.example.navigation.domain.BottomSheetManager
 import com.example.navigation.domain.RootNavigationHelper
+import com.example.navigation.ui.compose.BottomSheet
 import com.example.navigation.ui.compose.Screen
 import com.example.navigation.ui.compose.Tabs
 import com.example.navigation.ui.theme.NavigationTheme
 import com.google.gson.Gson
 
 class MainActivity : ComponentActivity() {
-    private val manager = BottomMenuManager()
+    private val menuManager = BottomMenuManager()
+    private val bottomSheetManager = BottomSheetManager()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val jsonString = readJSONFromAssets(this, "config.json")
         val config = Gson().fromJson(jsonString, Config::class.java)
         if (config.start == CASINO) {
-            manager.setItems(config.casino, config.casino.first())
+            menuManager.setItems(config.casino, config.casino.first())
         } else {
-            manager.setItems(config.sports, config.sports.first())
+            menuManager.setItems(config.sports, config.sports.first())
         }
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             NavigationTheme {
+                val bottomSheet by bottomSheetManager.state.collectAsState()
+                if (bottomSheet) {
+                    BottomSheet(onDismissRequest = { bottomSheetManager.hide() })
+                }
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     bottomBar = {
-                        val visible by manager.visible.collectAsState()
+                        val visible by menuManager.visible.collectAsState()
                         AnimatedVisibility(
                             visible = visible,
                             enter = expandVertically(),
                             exit = shrinkVertically()
                         ) {
-                            val items by manager.state.collectAsState()
+                            val items by menuManager.state.collectAsState()
                             NavigationBar {
                                 items.forEach { item ->
                                     NavigationBarItem(
@@ -88,7 +95,7 @@ class MainActivity : ComponentActivity() {
                                             )
                                         },
                                         onClick = {
-                                            manager.selectItem(item.type)
+                                            menuManager.selectItem(item.type)
                                         }
                                     )
                                 }
@@ -98,7 +105,6 @@ class MainActivity : ComponentActivity() {
                 ) { padding ->
                     MainContent(
                         modifier = Modifier.padding(padding),
-                        finish = { finish() },
                         config = config
                     )
                 }
@@ -108,8 +114,7 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     private fun MainContent(
-        modifier: Modifier,
-        finish: () -> Unit,
+        modifier: Modifier = Modifier,
         config: Config
     ) {
         val controller = rememberNavController()
@@ -119,11 +124,11 @@ class MainActivity : ComponentActivity() {
         fun popBackStack() {
             val previous = navigationHelper.previous
             if (previous is Casino && selectedTab != CASINO) {
-                manager.setItems(config.casino, previous.screenButton())
+                menuManager.setItems(config.casino, previous.screenButton())
                 selectedTab = CASINO
             }
             if (previous is Sports && selectedTab != SPORTS) {
-                manager.setItems(config.sports, previous.screenButton())
+                menuManager.setItems(config.sports, previous.screenButton())
                 selectedTab = SPORTS
             }
             if (!navigationHelper.popBackStack()) finish()
@@ -131,16 +136,16 @@ class MainActivity : ComponentActivity() {
 
         LaunchedEffect(Unit) {
             navigationHelper.current.collect { current ->
-                manager.selectItem(current.screenButton())
+                menuManager.selectItem(current.screenButton())
                 if (current.bottomMenuVisible()) {
-                    manager.showMenu()
+                    menuManager.showMenu()
                 } else {
-                    manager.hideMenu()
+                    menuManager.hideMenu()
                 }
             }
         }
         LaunchedEffect(Unit) {
-            manager.selected.collect { selected ->
+            menuManager.selected.collect { selected ->
                 if (selectedTab == CASINO) {
                     casinoRouteMap[selected.type]
                 } else {
@@ -158,11 +163,11 @@ class MainActivity : ComponentActivity() {
                 selectedTab = it
                 if (it == CASINO) {
                     val lastCasino = navigationHelper.lastCasino()
-                    manager.setItems(config.casino, lastCasino.screenButton())
+                    menuManager.setItems(config.casino, lastCasino.screenButton())
                     navigationHelper.navigate(lastCasino)
                 } else {
                     val lastSports = navigationHelper.lastSports()
-                    manager.setItems(config.sports, lastSports.screenButton())
+                    menuManager.setItems(config.sports, lastSports.screenButton())
                     navigationHelper.navigate(lastSports)
                 }
             }
@@ -172,27 +177,58 @@ class MainActivity : ComponentActivity() {
                 startDestination = navigationHelper.startRoute
             ) {
                 // Casino
-                addSimpleScreen<CasinoTop>(goBack = { popBackStack() })
-                addSimpleScreen<CasinoSlots>(goBack = { popBackStack() })
-                addSimpleScreen<CasinoSearch>(goBack = { popBackStack() })
-                addSimpleScreen<CasinoLive>(goBack = { popBackStack() })
+                addSimpleScreen<CasinoTop>(
+                    goBack = { popBackStack() },
+                    openBottomSheet = bottomSheetManager::show
+                )
+                addSimpleScreen<CasinoSlots>(
+                    goBack = { popBackStack() },
+                    openBottomSheet = bottomSheetManager::show
+                )
+                addSimpleScreen<CasinoSearch>(
+                    goBack = { popBackStack() },
+                    openBottomSheet = bottomSheetManager::show
+                )
+                addSimpleScreen<CasinoLive>(
+                    goBack = { popBackStack() },
+                    openBottomSheet = bottomSheetManager::show
+                )
                 // Sports
-                addSimpleScreen<SportsTop>(goBack = { popBackStack() })
-                addSimpleScreen<SportsSport>(goBack = { popBackStack() })
-                addSimpleScreen<SportsSearch>(goBack = { popBackStack() })
-                addSimpleScreen<SportsMyBets>(goBack = { popBackStack() })
+                addSimpleScreen<SportsTop>(
+                    goBack = { popBackStack() },
+                    openBottomSheet = bottomSheetManager::show
+                )
+                addSimpleScreen<SportsSport>(
+                    goBack = { popBackStack() },
+                    openBottomSheet = bottomSheetManager::show
+                )
+                addSimpleScreen<SportsSearch>(
+                    goBack = { popBackStack() },
+                    openBottomSheet = bottomSheetManager::show
+                )
+                addSimpleScreen<SportsMyBets>(
+                    goBack = { popBackStack() },
+                    openBottomSheet = bottomSheetManager::show
+                )
                 // Shared
-                addSimpleScreen<Menu>(goBack = { popBackStack() })
+                addSimpleScreen<Menu>(
+                    goBack = { popBackStack() },
+                    openBottomSheet = bottomSheetManager::show
+                )
             }
         }
     }
 }
 
-private inline fun <reified T : Any> NavGraphBuilder.addSimpleScreen(noinline goBack: () -> Unit) {
+private inline fun <reified T : Any> NavGraphBuilder.addSimpleScreen(
+    noinline goBack: () -> Unit,
+    noinline openBottomSheet: () -> Unit,
+) {
     composable<T> {
         Screen(
             text = T::class.simpleName ?: "",
             goBack = goBack,
+            openBottomSheet = openBottomSheet,
         )
     }
 }

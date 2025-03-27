@@ -22,12 +22,18 @@ data class ScreenData(val i: Int = 0)
 
 @Composable
 fun Screen(
+    modifier: Modifier = Modifier,
     text: String = "",
-    goBack: () -> Unit = {}
+    goBack: () -> Unit = {},
+    openBottomSheet: () -> Unit = {}
 ) {
     BackInterceptor(goBack)
     val controller = rememberNavController()
-    NavHost(controller, startDestination = ScreenData()) {
+    NavHost(
+        modifier = modifier,
+        navController = controller,
+        startDestination = ScreenData()
+    ) {
         composable<ScreenData> { backStackEntry ->
             val data: ScreenData = backStackEntry.toRoute()
             Column(
@@ -41,6 +47,9 @@ fun Screen(
                     controller.navigate(ScreenData(data.i + 1))
                 }) {
                     Text("Add stack")
+                }
+                Button(onClick = openBottomSheet) {
+                    Text("Open bottom sheet")
                 }
                 Button(onClick = {
                     if (!controller.popBackStack()) {
