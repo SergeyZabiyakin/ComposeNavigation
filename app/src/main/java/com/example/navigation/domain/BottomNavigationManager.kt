@@ -16,107 +16,97 @@ import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.runtime.Stable
-import com.example.navigation.data.Config.Section.Button
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.channels.BufferOverflow
+import com.example.navigation.data.Config.Button
+import com.example.navigation.data.Config.Button.LIVE
+import com.example.navigation.data.Config.Button.MENU
+import com.example.navigation.data.Config.Button.MY_BETS
+import com.example.navigation.data.Config.Button.SEARCH
+import com.example.navigation.data.Config.Button.SLOTS
+import com.example.navigation.data.Config.Button.SPORT
+import com.example.navigation.data.Config.Button.TOP
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.mapNotNull
 
 @Stable
-class BottomNavigationManager(
-    private val appScope: CoroutineScope
-) {
-    private val _itemFlow = MutableStateFlow(emptyList<BottomNavigationItem>())
-    private val _onItemSelectedFlow = MutableSharedFlow<Button>(
-        extraBufferCapacity = 1,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST
-    )
-
-    val itemFlow: StateFlow<List<BottomNavigationItem>> = _itemFlow
-    val onItemSelectedFlow: Flow<Button> = _onItemSelectedFlow
-
-    fun setItems(items: List<Button>, selectedItem: Button) = appScope.launch {
-        val newItems = items.map {
-            if (it == selectedItem) {
-                _onItemSelectedFlow.emit(selectedItem)
-            }
-            getItem(it, it == selectedItem)
-        }
-        _itemFlow.emit(newItems)
+class BottomNavigationManager {
+    private val _state = MutableStateFlow(emptyList<BottomNavigationItem>())
+    val state: StateFlow<List<BottomNavigationItem>> = _state
+    val selected: Flow<BottomNavigationItem> = _state.mapNotNull { list ->
+        list.firstOrNull { it.selected }
     }
 
-    fun selectItem(button: Button) = appScope.launch {
-        val items = _itemFlow.value
+    fun setItems(items: List<Button>) {
+        _state.value = items.mapNotNull { itemsMap[it] }
+    }
+
+    fun selectItem(button: Button) {
+        val items = _state.value
         val newItems = buildList(items.size) {
             items.forEach { item ->
                 if (item.type == button) {
                     if (!item.selected) {
                         add(item.copy(selected = true))
                     } else {
-                        return@launch
+                        return
                     }
                 } else {
                     add(item.copy(selected = false))
                 }
             }
         }
-        _itemFlow.emit(newItems)
-        _onItemSelectedFlow.emit(button)
+        _state.value = newItems
     }
-}
 
-private fun getItem(item: Button, selected: Boolean): BottomNavigationItem = when (item) {
-    Button.TOP -> BottomNavigationItem(
-        type = Button.TOP,
-        selected = selected,
-        iconSelected = Icons.Filled.Place,
-        iconUnselected = Icons.Outlined.Place
+    private val itemsMap = hashMapOf(
+        TOP to BottomNavigationItem(
+            type = TOP,
+            selected = false,
+            iconSelected = Icons.Filled.Place,
+            iconUnselected = Icons.Outlined.Place
+        ),
+
+        SLOTS to BottomNavigationItem(
+            type = SLOTS,
+            selected = false,
+            iconSelected = Icons.Filled.Email,
+            iconUnselected = Icons.Outlined.Email
+        ),
+
+        SEARCH to BottomNavigationItem(
+            type = SEARCH,
+            selected = false,
+            iconSelected = Icons.Filled.Search,
+            iconUnselected = Icons.Outlined.Search
+        ),
+
+        LIVE to BottomNavigationItem(
+            type = LIVE,
+            selected = false,
+            iconSelected = Icons.Filled.Lock,
+            iconUnselected = Icons.Outlined.Lock
+        ),
+
+        MENU to BottomNavigationItem(
+            type = MENU,
+            selected = false,
+            iconSelected = Icons.Filled.Menu,
+            iconUnselected = Icons.Outlined.Menu
+        ),
+
+        SPORT to BottomNavigationItem(
+            type = SPORT,
+            selected = false,
+            iconSelected = Icons.Filled.ShoppingCart,
+            iconUnselected = Icons.Outlined.ShoppingCart
+        ),
+
+        MY_BETS to BottomNavigationItem(
+            type = MY_BETS,
+            selected = false,
+            iconSelected = Icons.Filled.AccountBox,
+            iconUnselected = Icons.Outlined.AccountBox
+        )
     )
-
-    Button.SLOTS -> BottomNavigationItem(
-        type = Button.SLOTS,
-        selected = selected,
-        iconSelected = Icons.Filled.Email,
-        iconUnselected = Icons.Outlined.Email
-    )
-
-    Button.SEARCH -> BottomNavigationItem(
-        type = Button.SEARCH,
-        selected = selected,
-        iconSelected = Icons.Filled.Search,
-        iconUnselected = Icons.Outlined.Search
-    )
-
-    Button.LIVE -> BottomNavigationItem(
-        type = Button.LIVE,
-        selected = selected,
-        iconSelected = Icons.Filled.Lock,
-        iconUnselected = Icons.Outlined.Lock
-    )
-
-    Button.MENU -> BottomNavigationItem(
-        type = Button.MENU,
-        selected = selected,
-        iconSelected = Icons.Filled.Menu,
-        iconUnselected = Icons.Outlined.Menu
-    )
-
-    Button.SPORT -> BottomNavigationItem(
-        type = Button.SPORT,
-        selected = selected,
-        iconSelected = Icons.Filled.ShoppingCart,
-        iconUnselected = Icons.Outlined.ShoppingCart
-    )
-
-    Button.MY_BETS -> BottomNavigationItem(
-        type = Button.MY_BETS,
-        selected = selected,
-        iconSelected = Icons.Filled.AccountBox,
-        iconUnselected = Icons.Outlined.AccountBox
-    )
-
-    Button.UNKNOWN -> throw IllegalArgumentException()
 }

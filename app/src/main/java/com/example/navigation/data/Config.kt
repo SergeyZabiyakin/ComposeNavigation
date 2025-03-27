@@ -2,39 +2,33 @@ package com.example.navigation.data
 
 import com.google.gson.annotations.SerializedName
 
-
 data class Config(
-    val casino: Section,
-    val sports: Section,
+    val casino: List<Button>,
+    val sports: List<Button>,
     val start: Tab
 ) {
-    data class Section(
-        val buttons: List<Button>
-    ) {
-        enum class Button(val text: String) {
-            @SerializedName("Top")
-            TOP("Top"),
 
-            @SerializedName("Slots")
-            SLOTS("Slots"),
+    enum class Button(val text: String) {
+        @SerializedName("Top")
+        TOP("Top"),
 
-            @SerializedName("Search")
-            SEARCH("Search"),
+        @SerializedName("Slots")
+        SLOTS("Slots"),
 
-            @SerializedName("Live")
-            LIVE("Live"),
+        @SerializedName("Search")
+        SEARCH("Search"),
 
-            @SerializedName("Menu")
-            MENU("Menu"),
+        @SerializedName("Live")
+        LIVE("Live"),
 
-            @SerializedName("Sport")
-            SPORT("Sport"),
+        @SerializedName("Menu")
+        MENU("Menu"),
 
-            @SerializedName("My bets")
-            MY_BETS("My bets"),
+        @SerializedName("Sport")
+        SPORT("Sport"),
 
-            UNKNOWN("Unknown")
-        }
+        @SerializedName("My bets")
+        MY_BETS("My bets"),
     }
 
     enum class Tab {

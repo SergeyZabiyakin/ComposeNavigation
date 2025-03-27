@@ -4,33 +4,30 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import com.example.navigation.data.Config
+import com.example.navigation.data.Config.Tab
 import com.example.navigation.data.Config.Tab.CASINO
 import com.example.navigation.data.Config.Tab.SPORTS
 
 @Composable
 fun Tabs(
     modifier: Modifier = Modifier,
-    startTab: Config.Tab,
-    onClick: (Config.Tab) -> Unit
+    selectedTab: Tab,
+    onClick: (Tab) -> Unit
 ) {
-    var selectedTabIndex by remember(startTab) { mutableIntStateOf(startTab.ordinal) }
     val tabs = remember { listOf(CASINO, SPORTS) }
     TabRow(
         modifier = modifier,
-        selectedTabIndex = selectedTabIndex
+        selectedTabIndex = selectedTab.ordinal
     ) {
-        tabs.forEachIndexed { index, item ->
+        tabs.forEach { item ->
             Tab(
-                selected = index == selectedTabIndex,
+                selected = item == selectedTab,
                 onClick = {
-                    selectedTabIndex = index
-                    onClick.invoke(item)
+                    if (selectedTab != item){
+                        onClick.invoke(item)
+                    }
                 },
                 text = {
                     Text(text = item.name)

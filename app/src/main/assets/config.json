@@ -1,21 +1,17 @@
 {
-  "casino": {
-    "buttons": [
-      "Top",
-      "Slots",
-      "Search",
-      "Live",
-      "Menu"
-    ]
-  },
-  "sports": {
-    "buttons": [
-      "Top",
-      "Sport",
-      "Search",
-      "My bets",
-      "Menu"
-    ]
-  },
+  "casino": [
+    "Top",
+    "Slots",
+    "Search",
+    "Live",
+    "Menu"
+  ],
+  "sports": [
+    "Top",
+    "Sport",
+    "Search",
+    "My bets",
+    "Menu"
+  ],
   "start": "Casino"
 }

@@ -1,7 +1,7 @@
 package com.example.navigation.domain
 
 import androidx.compose.ui.graphics.vector.ImageVector
-import com.example.navigation.data.Config.Section.Button
+import com.example.navigation.data.Config.Button
 
 data class BottomNavigationItem(
     val type: Button,
