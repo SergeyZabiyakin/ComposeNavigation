@@ -23,10 +23,9 @@ data class ScreenData(val i: Int = 0)
 @Composable
 fun Screen(
     text: String = "",
-    goBack: () -> Unit = {},
-    beforeGoBack: () -> Unit
+    goBack: () -> Unit = {}
 ) {
-    BackInterceptor(beforeGoBack)
+    BackInterceptor(goBack)
     val controller = rememberNavController()
     NavHost(controller, startDestination = ScreenData()) {
         composable<ScreenData> { backStackEntry ->

@@ -108,7 +108,7 @@ class MainActivity : ComponentActivity() {
         var selectedTab by remember { mutableStateOf(config.start) }
         val navigationHelper = remember { NavigationHelper(config, controller) }
 
-        fun beforeGoBack() {
+        fun popBackStack() {
             val previous = navigationHelper.previous
             if (previous is Casino && selectedTab != CASINO) {
                 manager.setItems(config.casino)
@@ -118,10 +118,6 @@ class MainActivity : ComponentActivity() {
                 manager.setItems(config.sports)
                 selectedTab = SPORTS
             }
-        }
-
-        fun popBackStack() {
-            beforeGoBack()
             if (!navigationHelper.popBackStack()) finish()
         }
 
@@ -161,58 +157,27 @@ class MainActivity : ComponentActivity() {
                 startDestination = navigationHelper.startRoute
             ) {
                 // Casino
-                addSimpleScreen<CasinoTop>(
-                    onClick = { popBackStack() },
-                    beforeGoBack = { beforeGoBack() }
-                )
-                addSimpleScreen<CasinoSlots>(
-                    onClick = { popBackStack() },
-                    beforeGoBack = { beforeGoBack() }
-                )
-                addSimpleScreen<CasinoSearch>(
-                    onClick = { popBackStack() },
-                    beforeGoBack = { beforeGoBack() }
-                )
-                addSimpleScreen<CasinoLive>(
-                    onClick = { popBackStack() },
-                    beforeGoBack = { beforeGoBack() }
-                )
+                addSimpleScreen<CasinoTop>(goBack = { popBackStack() })
+                addSimpleScreen<CasinoSlots>(goBack = { popBackStack() })
+                addSimpleScreen<CasinoSearch>(goBack = { popBackStack() })
+                addSimpleScreen<CasinoLive>(goBack = { popBackStack() })
                 // Sports
-                addSimpleScreen<SportsTop>(
-                    onClick = { popBackStack() },
-                    beforeGoBack = { beforeGoBack() }
-                )
-                addSimpleScreen<SportsSport>(
-                    onClick = { popBackStack() },
-                    beforeGoBack = { beforeGoBack() }
-                )
-                addSimpleScreen<SportsSearch>(
-                    onClick = { popBackStack() },
-                    beforeGoBack = { beforeGoBack() }
-                )
-                addSimpleScreen<SportsMyBets>(
-                    onClick = { popBackStack() },
-                    beforeGoBack = { beforeGoBack() }
-                )
+                addSimpleScreen<SportsTop>(goBack = { popBackStack() })
+                addSimpleScreen<SportsSport>(goBack = { popBackStack() })
+                addSimpleScreen<SportsSearch>(goBack = { popBackStack() })
+                addSimpleScreen<SportsMyBets>(goBack = { popBackStack() })
                 // Shared
-                addSimpleScreen<Menu>(
-                    onClick = { popBackStack() },
-                    beforeGoBack = { beforeGoBack() }
-                )
+                addSimpleScreen<Menu>(goBack = { popBackStack() })
             }
         }
     }
 }
 
-private inline fun <reified T : Any> NavGraphBuilder.addSimpleScreen(
-    noinline onClick: () -> Unit,
-    noinline beforeGoBack: () -> Unit
-) {
+private inline fun <reified T : Any> NavGraphBuilder.addSimpleScreen(noinline goBack: () -> Unit) {
     composable<T> {
         Screen(
             text = T::class.simpleName ?: "",
-            goBack = onClick,
-            beforeGoBack = beforeGoBack
+            goBack = goBack,
         )
     }
 }

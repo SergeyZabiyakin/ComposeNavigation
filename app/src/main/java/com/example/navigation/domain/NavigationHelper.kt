@@ -1,6 +1,7 @@
 package com.example.navigation.domain
 
 import androidx.navigation.NavController
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.example.navigation.MainRouteConfig
 import com.example.navigation.MainRouteConfig.Casino
 import com.example.navigation.MainRouteConfig.Sports
@@ -25,10 +26,9 @@ class NavigationHelper(
         get() = stack.getOrNull(1)
 
     fun popBackStack(): Boolean {
-        if (stack.size <= 1) return false
-        if (controller.popBackStack()) {
+        if (stack.size > 1) {
             stack.pop()
-            stack.peek()?.let { _current.value = it }
+            navigate(stack.pop())
             return true
         }
         return false
@@ -36,24 +36,14 @@ class NavigationHelper(
 
     fun navigate(route: MainRouteConfig) {
         if (stack.peek() == route) return
-
-        val distance = LinkedList<MainRouteConfig>()
-        if (controller.popBackStack(route = route, inclusive = false, saveState = true)) {
-            while (stack.peek() != route) {
-                distance.push(stack.pop())
+        stack.remove(route)
+        stack.push(route)
+        controller.navigate(route) {
+            popUpTo(controller.graph.findStartDestination().id) {
+                saveState = true
             }
-            controller.popBackStack(route = route, inclusive = true, saveState = true)
-            distance.add(stack.pop())
-        } else {
-            distance.push(route)
-        }
-        while (distance.isNotEmpty()) {
-            val target = distance.pop()
-            stack.push(target)
-            controller.navigate(target) {
-                launchSingleTop = true
-                restoreState = true
-            }
+            launchSingleTop = true
+            restoreState = true
         }
         _current.value = route
     }
